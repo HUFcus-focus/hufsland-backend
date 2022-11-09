@@ -1,5 +1,6 @@
 package com.hufcusfocus.hufsland.module.auth;
 
+import com.hufcusfocus.hufsland.config.auth.UserPrincipal;
 import com.hufcusfocus.hufsland.domain.dto.auth.OAuthAttributes;
 import com.hufcusfocus.hufsland.domain.entity.user.User;
 import com.hufcusfocus.hufsland.module.user.UserRepository;
@@ -14,7 +15,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -35,7 +35,7 @@ public class OAuthService extends DefaultOAuth2UserService {
 
         User user = saveOrUpdate(oAuthAttributes);
         log.info("카카오 소셜로그인 성공 = {}", oAuthAttributes.getAttributes());
-        return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority(user.getRole().toString())), oAuthAttributes.getAttributes(), oAuthAttributes.getNameAttributeKey());
+        return UserPrincipal.create(user);
     }
 
     private User saveOrUpdate(OAuthAttributes oAuthAttributes) {

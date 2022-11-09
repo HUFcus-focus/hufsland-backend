@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Random;
 
+
 @Component
 @Slf4j
 public class JwtTokenProvider {
@@ -69,5 +70,4 @@ public class JwtTokenProvider {
             return false;
         }
     }
-
 }

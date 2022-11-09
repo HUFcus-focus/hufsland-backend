@@ -36,10 +36,10 @@ public class AuthService {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
-        params.add("client_id", "{클라이언트 앱 키}");
-        params.add("redirect_uri", "{리다이렉트 uri}");
+        params.add("client_id", "426b049ed8422f2c79371ca0b64d7c1c");
+        params.add("redirect_uri", "http://localhost:8080/v1/auth/kakao");
         params.add("code", code);
-        params.add("client_secret", "{시크릿 키}"); //TODO yml에서 가져오기
+        params.add("client_secret", "0m04119a4eHYLJScbMzxEvGQ4yiVQPt9"); //TODO yml에서 가져오기
 
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest
                 = new HttpEntity<>(params, headers);
