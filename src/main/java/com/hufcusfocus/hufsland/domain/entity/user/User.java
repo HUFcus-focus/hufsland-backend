@@ -1,36 +1,37 @@
 package com.hufcusfocus.hufsland.domain.entity.user;
 
-import com.hufcusfocus.hufsland.domain.entity.auditor.Auditor;
-import lombok.*;
+import com.hufcusfocus.hufsland.domain.entity.common.Auditor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Comment;
 
 import javax.persistence.*;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class User extends Auditor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private String email;
-
-    private String providerId;
-
     private String nickname;
 
-    private String provider;
+    private String email;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    private Provider provider;
+
     @Builder
-    public User(String email, String providerId, String nickname, String provider, Role role) {
-        this.email = email;
-        this.providerId = providerId;
+    public User(String nickname, String email, Role role, Provider provider) {
         this.nickname = nickname;
-        this.provider = provider;
+        this.email = email;
         this.role = role;
+        this.provider = provider;
     }
 }

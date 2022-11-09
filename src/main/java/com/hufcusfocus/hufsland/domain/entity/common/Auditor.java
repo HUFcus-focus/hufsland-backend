@@ -1,4 +1,4 @@
-package com.hufcusfocus.hufsland.domain.entity.auditor;
+package com.hufcusfocus.hufsland.domain.entity.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hufcusfocus.hufsland.domain.entity.user.User;
