@@ -6,9 +6,9 @@ import lombok.Data;
 public class KakaoProfile {
 
     private long id;
-    private String connectedAt;
+    private String connected_at;
     private Properties properties;
-    private KakaoAccount kakaoAccount;
+    private KakaoAccount kakao_account;
 
     @Data
     public class Properties {
@@ -17,12 +17,17 @@ public class KakaoProfile {
 
     @Data
     public class KakaoAccount {
+        private Boolean profile_nickname_needs_agreement;
         private Profile profile;
+        private Boolean has_email;
+        private Boolean email_needs_agreement;
+        private Boolean is_email_valid;
+        private Boolean is_email_verified;
         private String email;
     }
 
     @Data
-    public class Profile {
+    public static class Profile {
         private String nickname;
     }
 }

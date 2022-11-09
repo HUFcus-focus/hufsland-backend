@@ -33,11 +33,11 @@ public class UserService {
 
     private User saveKakao(String token) {
         KakaoProfile profile = findProfile(token);
-        Optional<User> optionalUser = userRepository.findByEmail(profile.getKakaoAccount().getEmail());
+        Optional<User> optionalUser = userRepository.findByEmail(profile.getKakao_account().getEmail());
         if (!optionalUser.isPresent()) {
             User user = User.builder()
-                    .nickname(profile.getKakaoAccount().getProfile().getNickname())
-                    .email(profile.getKakaoAccount().getEmail())
+                    .nickname(profile.getKakao_account().getProfile().getNickname())
+                    .email(profile.getKakao_account().getEmail())
                     .role(Role.ROLE_USER)
                     .provider(Provider.KAKAO).build();
             userRepository.save(user);

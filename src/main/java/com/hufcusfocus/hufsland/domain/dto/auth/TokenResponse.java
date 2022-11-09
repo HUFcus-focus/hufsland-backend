@@ -11,12 +11,9 @@ public class TokenResponse {
 
     private String accessToken;
 
-    private String refreshToken;
-
     @Builder
-    public TokenResponse(long userId, String accessToken, String refreshToken) {
+    public TokenResponse(long userId, String accessToken) {
         this.userId = userId;
         this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
     }
 }

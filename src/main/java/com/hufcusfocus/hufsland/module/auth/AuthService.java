@@ -2,24 +2,31 @@ package com.hufcusfocus.hufsland.module.auth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hufcusfocus.hufsland.domain.dto.auth.AuthToken;
+import com.hufcusfocus.hufsland.domain.entity.user.User;
 import com.hufcusfocus.hufsland.module.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import javax.servlet.http.HttpServletResponse;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public AuthToken getAccessToken(String provider, String code) {
         if (provider.equals("kakao")) {
@@ -36,10 +43,10 @@ public class AuthService {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
-        params.add("client_id", "426b049ed8422f2c79371ca0b64d7c1c");
-        params.add("redirect_uri", "http://localhost:8080/v1/auth/kakao");
+        params.add("client_id", "1fc0c8ac5d799ad22f0c408f133c0d3f");
+        params.add("redirect_uri", "http://localhost:3000/auth/kakao/");
         params.add("code", code);
-        params.add("client_secret", "0m04119a4eHYLJScbMzxEvGQ4yiVQPt9"); //TODO yml에서 가져오기
+        params.add("client_secret", "lPu6bcM87SGMqEKEYdK8OlMbEJX6Fhed"); //TODO yml에서 가져오기
 
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest
                 = new HttpEntity<>(params, headers);
