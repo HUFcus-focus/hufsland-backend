@@ -1,6 +1,5 @@
 package com.hufcusfocus.hufsland.domain.dto.auth;
 
-import com.hufcusfocus.hufsland.domain.entity.user.Role;
 import lombok.Builder;
 import lombok.Data;
 

@@ -8,6 +8,8 @@ import com.hufcusfocus.hufsland.module.user.UserService;
 import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +36,6 @@ public class AuthApi {
                 .userId(user.getId())
                 .accessToken(appToken)
                 .build();
-        response.setHeader("Authorization", "Bearer "+tokenResponse);
+        response.setHeader("Authorization", "Bearer "+appToken);
     }
 }
