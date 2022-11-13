@@ -8,46 +8,28 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+/**
+ * Spring Security가 /login.do 요청이 들어오면
+ * 로그인이 완료되면 Security Session 을 생성한다. ( SecurityHolder )
+ * Object Type => Authentication 타입 객체
+ * Authentication 안에 User 정보가 있어야 함.
+ * User Object Type => UserDetails Type 객체
+ *
+ * Security Session -> Authentication -> UserDetails(PrincipalDetails)
+ */
 @Getter
 public class UserPrincipal implements OAuth2User, UserDetails {
 
-    private long id;
+    private User user;
 
-    private String email;
-
-    private Collection<? extends GrantedAuthority> authorities;
-
-    private Map<String, Object> attributes;
-
-    public UserPrincipal(long id, String email, Collection<? extends GrantedAuthority> authorities) {
-        this.id = id;
-        this.email = email;
-        this.authorities = authorities;
+    public UserPrincipal(User user) {
+        this.user = user;
     }
 
-    public static UserPrincipal create(User user) {
-        List<GrantedAuthority> authorities =
-                Collections.singletonList(new SimpleGrantedAuthority(Role.ROLE_USER.toString()));
-        return new UserPrincipal(
-                user.getId(),
-                user.getEmail(),
-                authorities
-        );
-    }
-
-    public static UserPrincipal create(User user, Map<String, Object> attributes) {
-        UserPrincipal userPrinciple = UserPrincipal.create(user);
-        userPrinciple.setAttributes(attributes);
-        return userPrinciple;
-    }
-
-    private void setAttributes(Map<String, Object> attributes) {
-        this.attributes = attributes;
+    public User getUser() {
+        return user;
     }
 
     @Override
@@ -57,7 +39,7 @@ public class UserPrincipal implements OAuth2User, UserDetails {
 
     @Override
     public String getUsername() {
-        return this.email;
+        return user.getNickname();
     }
 
     @Override
@@ -82,16 +64,18 @@ public class UserPrincipal implements OAuth2User, UserDetails {
 
     @Override
     public Map<String, Object> getAttributes() {
-        return this.attributes;
+        return null;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return this.authorities;
+        Collection<GrantedAuthority> authList = new ArrayList<>();
+        authList.add(new SimpleGrantedAuthority(String.valueOf(user.getRole())));
+        return authList;
     }
 
     @Override
     public String getName() {
-        return String.valueOf(this.id);
+        return user.getEmail();
     }
 }

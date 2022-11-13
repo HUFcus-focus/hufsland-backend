@@ -3,16 +3,16 @@ package com.hufcusfocus.hufsland.domain.dto.auth;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.Date;
+
 @Data
 public class TokenResponse {
-
-    private long userId;
-
-    private String accessToken;
+    private String token;
+    private Date expiresIn;
 
     @Builder
-    public TokenResponse(long userId, String accessToken) {
-        this.userId = userId;
-        this.accessToken = accessToken;
+    public TokenResponse(String token, Date expiresIn) {
+        this.token = token;
+        this.expiresIn = expiresIn;
     }
 }

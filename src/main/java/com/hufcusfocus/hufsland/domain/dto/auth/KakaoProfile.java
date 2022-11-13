@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class KakaoProfile {
-
     private long id;
     private String connected_at;
     private Properties properties;

@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @Data
 public class Auditor {
-
     @CreatedDate
     @Column(name = "REGISTED_DATETIME", updatable = false, nullable = true)
     @Comment("등록일")

@@ -2,13 +2,13 @@ package com.hufcusfocus.hufsland.module.auth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hufcusfocus.hufsland.domain.dto.auth.AuthToken;
+import com.hufcusfocus.hufsland.domain.entity.auth.RefreshToken;
 import com.hufcusfocus.hufsland.domain.entity.user.User;
-import com.hufcusfocus.hufsland.module.user.UserRepository;
+import com.hufcusfocus.hufsland.module.user.UserService;
+import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -19,24 +19,43 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import javax.servlet.http.HttpServletResponse;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final UserService userService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthRepository authRepository;
 
-    public AuthToken getAccessToken(String provider, String code) {
+
+    @Transactional(rollbackFor = Exception.class)
+    public String getAuthentication(String provider, String code) {
+        AuthToken socialToken = getSocialToken(provider, code);
+        User user = userService.save(provider, socialToken.getAccess_token());
+
+        String accessToken = jwtTokenProvider.createAccessToken(String.valueOf(user.getId()));
+        String refreshToken = jwtTokenProvider.createRefreshToken();
+
+        RefreshToken token = RefreshToken.builder()
+                .refreshToken(refreshToken)
+                .userId(user.getId())
+                .build();
+        authRepository.save(token);
+
+        return accessToken;
+    }
+
+    public AuthToken getSocialToken(String provider, String code) {
         if (provider.equals("kakao")) {
-            return getKakaoAccessToken(code);
+            return getKakaoToken(code);
         } else {
             return null; //TODO 예외처리
         }
     }
 
-    private AuthToken getKakaoAccessToken(String code) {
+    private AuthToken getKakaoToken(String code) {
         RestTemplate template = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
@@ -68,5 +87,22 @@ public class AuthService {
             e.printStackTrace();
         }
         return authToken;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public String getReAuthentication(String accessToken) {
+        String payload = jwtTokenProvider.getPayload(accessToken);
+        long userId = Long.parseLong(payload);
+        Optional<RefreshToken> optionalRefreshToken = authRepository.findByUserId(userId);
+
+        if (optionalRefreshToken.isPresent()) {
+            String newRefreshToken = jwtTokenProvider.createRefreshToken();
+            RefreshToken refreshToken = optionalRefreshToken.get();
+            refreshToken.setRefreshToken(newRefreshToken);
+            authRepository.save(refreshToken);
+            return jwtTokenProvider.createAccessToken(payload);
+        } else {
+            throw new RuntimeException("유효하지 않은 토큰 입니다");
+        }
     }
 }

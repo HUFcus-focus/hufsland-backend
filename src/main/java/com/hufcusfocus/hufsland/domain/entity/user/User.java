@@ -11,7 +11,6 @@ import javax.persistence.*;
 @Getter
 @NoArgsConstructor
 public class User extends Auditor {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -26,8 +25,10 @@ public class User extends Auditor {
     @Enumerated(EnumType.STRING)
     private Provider provider;
 
+    private String providerToken;
+
     @Builder
-    public User(String nickname, String email, Role role, Provider provider) {
+    public User(String nickname, String email, Role role, Provider provider, String providerToken) {
         this.nickname = nickname;
         this.email = email;
         this.role = role;
