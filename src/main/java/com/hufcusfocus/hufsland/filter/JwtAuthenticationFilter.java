@@ -23,13 +23,11 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     private UserRepository userRepository;
-    private AuthService authService;
     private JwtTokenProvider jwtTokenProvider;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, UserRepository userRepository, AuthService authService, JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, UserRepository userRepository, JwtTokenProvider jwtTokenProvider) {
         super(authenticationManager);
         this.userRepository = userRepository;
-        this.authService = authService;
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
@@ -38,13 +36,6 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         String requestURI = request.getRequestURI();
         if (!requestURI.contains("/v1/auth")) {
             String accessToken = request.getHeader("Authorization").replace("Bearer ", "");
-            log.info("토큰검증 = {}", accessToken);
-
-            boolean isValidated = jwtTokenProvider.validateToken(accessToken);
-            if (!isValidated) {
-                String newAccessToken = authService.getReAuthentication(accessToken);
-                response.setHeader("Authorization", "Bearer "+newAccessToken);
-            }
 
             String userId = jwtTokenProvider.getPayload(accessToken);
             User user = userRepository.findById(Long.parseLong(userId))
@@ -56,7 +47,6 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
         chain.doFilter(request, response);
     }
 }

@@ -36,7 +36,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
                 .and()
                 .formLogin().disable()
-                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), userRepository, authService, jwtTokenProvider),
+                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), userRepository, jwtTokenProvider),
                         BasicAuthenticationFilter.class);
     }
 

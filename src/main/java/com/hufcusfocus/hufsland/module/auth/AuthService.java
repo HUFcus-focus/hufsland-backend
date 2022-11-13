@@ -96,13 +96,15 @@ public class AuthService {
         Optional<RefreshToken> optionalRefreshToken = authRepository.findByUserId(userId);
 
         if (optionalRefreshToken.isPresent()) {
-            String newRefreshToken = jwtTokenProvider.createRefreshToken();
-            RefreshToken refreshToken = optionalRefreshToken.get();
-            refreshToken.setRefreshToken(newRefreshToken);
-            authRepository.save(refreshToken);
-            return jwtTokenProvider.createAccessToken(payload);
+            boolean isValidated = jwtTokenProvider.validateToken(optionalRefreshToken.get().getRefreshToken());
+            if (isValidated) {
+                return jwtTokenProvider.createAccessToken(payload);
+            } else {
+                authRepository.delete(optionalRefreshToken.get());
+                return null;
+            }
         } else {
-            throw new RuntimeException("유효하지 않은 토큰 입니다");
+            return null;
         }
     }
 }
