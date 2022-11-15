@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 @RestController
@@ -27,18 +29,22 @@ public class AuthApi {
     }
 
     @GetMapping("/token")
-    public String tokenValidation(HttpServletRequest request, HttpServletResponse response) {
+    public Map<String, String> tokenValidation(HttpServletRequest request, HttpServletResponse response) {
         String accessToken = request.getHeader("Authorization").replace("Bearer ", "");
         boolean isValidated = jwtTokenProvider.validateToken(accessToken);
+        Map<String, String> map = new HashMap<>();
         if (!isValidated) {//access 토큰 만료기간이 지난 경우
             String newAccessToken = authService.getReAuthentication(accessToken);
             if (Objects.isNull(newAccessToken)) {//refresh 토큰의 만료기간도 지난경우
-                return "EXPIRED";
+                map.put("status", "EXPIRED");
+
             } else {//새로운 access 토큰을 발급받은 경우
                 response.setHeader("Authorization", "Bearer "+newAccessToken);
-                return "RENEW";
+                map.put("status", "RENEW");
             }
+        } else {
+            map.put("status", "OK");
         }
-        return "OK";
+        return map;
     }
 }
