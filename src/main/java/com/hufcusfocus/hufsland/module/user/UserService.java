@@ -7,6 +7,7 @@ import com.hufcusfocus.hufsland.domain.entity.user.Provider;
 import com.hufcusfocus.hufsland.domain.entity.user.Role;
 import com.hufcusfocus.hufsland.domain.entity.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -21,6 +22,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    @Value("{security.oauth2.client.registration.kakao.user-info-uri}")
+    private final String USER_INFO_URI;
+    @Value("{headers.content-type}")
+    private final String CONTENT_TYPE;
 
     public User save(String provider, String token) {
         if (provider.equals("kakao")) {
@@ -50,13 +55,13 @@ public class UserService {
         RestTemplate template = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + token); //(1-4)
-        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+        headers.add("Authorization", "Bearer " + token);
+        headers.add("Content-type", CONTENT_TYPE);
 
         HttpEntity<MultiValueMap<String, String>> kakaoProfileRequest = new HttpEntity<>(headers);
 
         ResponseEntity<String> kakaoProfileResponse = template.exchange(
-                "https://kapi.kakao.com/v2/user/me",
+                USER_INFO_URI,
                 HttpMethod.POST,
                 kakaoProfileRequest,
                 String.class

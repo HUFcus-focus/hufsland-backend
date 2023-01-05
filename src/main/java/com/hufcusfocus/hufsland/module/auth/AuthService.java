@@ -9,6 +9,7 @@ import com.hufcusfocus.hufsland.domain.entity.user.User;
 import com.hufcusfocus.hufsland.module.user.UserService;
 import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -28,6 +29,18 @@ public class AuthService {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthRepository authRepository;
+    @Value("{security.oauth2.client.registration.kakao.authorization-grant-type}")
+    private final String GRANT_TYPE;
+    @Value("{security.oauth2.client.registration.kakao.client-id}")
+    private final String CLIENT_ID;
+    @Value("{security.oauth2.client.registration.kakao.client-secret}")
+    private final String CLIENT_SECRET;
+    @Value("{security.oauth2.client.registration.kakao.redirect-uri}")
+    private final String REDIRECT_URI;
+    @Value("{security.oauth2.client.provider.kakao.token-uri}")
+    private final String TOKEN_URI;
+    @Value("{headers.content-type}")
+    private final String CONTENT_TYPE;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -51,27 +64,26 @@ public class AuthService {
         if (provider.equals("kakao")) {
             return getKakaoToken(code);
         } else {
-            return null; //TODO 예외처리
+            return null; //TODO 예외처리 (소셜토큰 가져오기 메서드)
         }
     }
 
     private AuthToken getKakaoToken(String code) {
         RestTemplate template = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+        headers.add("Content-type", CONTENT_TYPE);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "authorization_code");
-        params.add("client_id", "1fc0c8ac5d799ad22f0c408f133c0d3f");
-        params.add("redirect_uri", "http://localhost:3000/auth/kakao/");
+        params.add("grant_type", GRANT_TYPE);
+        params.add("client_id", CLIENT_ID);
+        params.add("client_secret", CLIENT_SECRET);
+        params.add("redirect_uri", REDIRECT_URI);
         params.add("code", code);
-        params.add("client_secret", "lPu6bcM87SGMqEKEYdK8OlMbEJX6Fhed"); //TODO yml에서 가져오기
 
-        HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest
-                = new HttpEntity<>(params, headers);
+        HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
 
         ResponseEntity<String> accessTokenResponse = template.exchange(
-                "https://kauth.kakao.com/oauth/token",
+                TOKEN_URI,
                 HttpMethod.POST,
                 kakaoTokenRequest,
                 String.class
@@ -82,7 +94,7 @@ public class AuthService {
         try {
             authToken = mapper.readValue(accessTokenResponse.getBody(), AuthToken.class);
         } catch (JsonMappingException e) {
-            e.printStackTrace();
+            e.printStackTrace(); //TODO 예외처리 (소셜토큰 가져오기 메서드)
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

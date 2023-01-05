@@ -1,6 +1,5 @@
 package com.hufcusfocus.hufsland.domain.entity.user;
 
-import com.hufcusfocus.hufsland.domain.entity.common.Auditor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +9,7 @@ import javax.persistence.*;
 @Entity
 @Getter
 @NoArgsConstructor
-public class User extends Auditor {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;

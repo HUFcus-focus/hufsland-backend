@@ -20,7 +20,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final UserRepository userRepository;
-    private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
@@ -46,7 +45,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         configuration.addAllowedOrigin("http://localhost:3000");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
-        configuration.addAllowedOrigin("*");
         configuration.addExposedHeader("*");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

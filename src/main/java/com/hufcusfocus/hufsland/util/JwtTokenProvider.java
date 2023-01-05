@@ -17,6 +17,9 @@ import java.util.Random;
 @Slf4j
 public class JwtTokenProvider {
 
+    /*
+    * TODO : 상수값으로 변경, final 키워드 적용
+    * */
     @Value("${jwt.access-token.expire-length}")
     private long accessTokenValidityInMilliseconds;
 
