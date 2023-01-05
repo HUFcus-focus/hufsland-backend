@@ -9,6 +9,7 @@ import com.hufcusfocus.hufsland.domain.entity.auth.RefreshToken;
 import com.hufcusfocus.hufsland.module.account.AccountService;
 import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -63,9 +65,8 @@ public class AuthService {
     public AuthToken getSocialToken(String provider, String code) {
         if (provider.equals("kakao")) {
             return getKakaoToken(code);
-        } else {
-            return null; //TODO 예외처리 (소셜토큰 가져오기 메서드)
         }
+        return null; //TODO : 예외발생시켜야 하는가?
     }
 
     private AuthToken getKakaoToken(String code) {
@@ -94,9 +95,9 @@ public class AuthService {
         try {
             authToken = mapper.readValue(accessTokenResponse.getBody(), AuthToken.class);
         } catch (JsonMappingException e) {
-            e.printStackTrace(); //TODO 예외처리 (소셜토큰 가져오기 메서드)
+            log.warn("KAKAO토큰을 JSON으로 매핑하는 과정에서 예외발생 = {}", e.getMessage());
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.warn("KAKAO토큰을 JSON으로 매핑하는 과정에서 예외발생 = {}", e.getMessage());
         }
         return authToken;
     }
@@ -111,12 +112,10 @@ public class AuthService {
             boolean isValidated = jwtTokenProvider.validateToken(optionalRefreshToken.get().getRefreshToken());
             if (isValidated) {
                 return jwtTokenProvider.createAccessToken(payload);
-            } else {
-                authRepository.delete(optionalRefreshToken.get());
-                return null;
             }
-        } else {
+            authRepository.delete(optionalRefreshToken.get());
             return null;
         }
+        return null;
     }
 }

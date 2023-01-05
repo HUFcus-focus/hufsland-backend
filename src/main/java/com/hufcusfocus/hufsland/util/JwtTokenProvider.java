@@ -1,12 +1,11 @@
 package com.hufcusfocus.hufsland.util;
 
 import io.jsonwebtoken.*;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Random;
@@ -14,34 +13,25 @@ import java.util.Random;
 
 @Component
 @Slf4j
+@AllArgsConstructor
 public class JwtTokenProvider {
 
-    /*
-    * TODO : 상수값으로 변경, final 키워드 적용
-    * */
     @Value("${jwt.access-token.expire-length}")
-    private long accessTokenValidityInMilliseconds;
-
+    private final long ACCESS_TOKEN_VALIDITY;
     @Value("${jwt.refresh-token.expire-length}")
-    private long refreshTokenValidityInMilliseconds;
-
+    private final long REFRESH_TOKEN_VALIDITY;
     @Value("${jwt.token.secret-key}")
-    private String secretKey;
-//
-//    @PostConstruct
-//    protected void init() {// 객체 초기화, secretKey를 Base64로 인코딩한다.
-//        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
-//    }
+    private final String SECRET_KEY;
 
     public String createAccessToken(String payload) {
-        return createToken(payload, accessTokenValidityInMilliseconds);
+        return createToken(payload, ACCESS_TOKEN_VALIDITY);
     }
 
     public String createRefreshToken() {
         byte[] array = new byte[7];
         new Random().nextBytes(array);
         String generatedString = new String(array, StandardCharsets.UTF_8);
-        return createToken(generatedString, refreshTokenValidityInMilliseconds);
+        return createToken(generatedString, REFRESH_TOKEN_VALIDITY);
     }
 
     public String createToken(String payload, long expireLength) {
@@ -52,40 +42,41 @@ public class JwtTokenProvider {
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(validity)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
     }
 
-    public String getPayload(String token){
+    public String getPayload(String token) {
         try {
             return Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .setSigningKey(SECRET_KEY)
                     .parseClaimsJws(token)
                     .getBody()
                     .getSubject();
         } catch (ExpiredJwtException e) {
             return e.getClaims().getSubject();
-        } catch (JwtException e){
-            throw new RuntimeException("유효하지 않은 토큰 입니다");
+        } catch (JwtException exception){
+            log.warn("토큰정보 추출과정에서 예외 발생 = {}", exception.getMessage());
+            throw new RuntimeException("유효하지 않은 토큰 입니다"); //TODO : 예외처리 어떻게?
         }
     }
 
     public boolean validateToken(String token) {
         try {
-            Jws<Claims> claimsJws = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            Jws<Claims> claimsJws = Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
             return !claimsJws.getBody().getExpiration().before(new Date());
-        } catch (SignatureException e) {
-            log.error("Invalid JWT signature");
-        } catch (MalformedJwtException e) {
-            log.error("Invalid JWT token");
-        } catch (ExpiredJwtException e) {
-            log.error("Expired JWT token");
-        } catch (UnsupportedJwtException e) {
-            log.error("Unsupported JWT token");
-        } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty.");
-        } catch (NullPointerException e){
-            log.error("JWT RefreshToken is empty");
+        } catch (SignatureException exception) {
+            log.warn("토큰검증 과정에서 예외 발생 = {}", exception.getMessage());
+        } catch (MalformedJwtException exception) {
+            log.warn("토큰검증 과정에서 예외 발생 = {}", exception.getMessage());
+        } catch (ExpiredJwtException exception) {
+            log.warn("토큰검증 과정에서 예외 발생 = {}", exception.getMessage());
+        } catch (UnsupportedJwtException exception) {
+            log.warn("토큰검증 과정에서 예외 발생 = {}", exception.getMessage());
+        } catch (IllegalArgumentException exception) {
+            log.warn("토큰검증 과정에서 예외 발생 = {}", exception.getMessage());
+        } catch (NullPointerException exception){
+            log.warn("토큰검증 과정에서 예외 발생 = {}", exception.getMessage());
         }
         return false;
     }
