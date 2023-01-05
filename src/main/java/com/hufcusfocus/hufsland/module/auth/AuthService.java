@@ -43,6 +43,11 @@ public class AuthService {
     private final String TOKEN_URI;
     @Value("{headers.content-type}")
     private final String CONTENT_TYPE;
+    private final String HEADER_GRANT_TYPE = "grant_type";
+    private final String HEADER_CLIENT_ID = "client_id";
+    private final String HEADER_CLIENT_SECRET = "client_secret";
+    private final String HEADER_REDIRECT_URI = "redirect_uri";
+    private final String HEADER_CODE = "code";
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -70,25 +75,8 @@ public class AuthService {
     }
 
     private AuthToken getKakaoToken(String code) {
-        RestTemplate template = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-type", CONTENT_TYPE);
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", GRANT_TYPE);
-        params.add("client_id", CLIENT_ID);
-        params.add("client_secret", CLIENT_SECRET);
-        params.add("redirect_uri", REDIRECT_URI);
-        params.add("code", code);
-
-        HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
-
-        ResponseEntity<String> accessTokenResponse = template.exchange(
-                TOKEN_URI,
-                HttpMethod.POST,
-                kakaoTokenRequest,
-                String.class
-        );
+        HttpEntity<MultiValueMap<String, String>> accessTokenRequest = getAccessTokenRequest(code);
+        ResponseEntity<String> accessTokenResponse = getAccessTokenResponse(accessTokenRequest);
 
         ObjectMapper mapper = new ObjectMapper();
         AuthToken authToken = null;
@@ -100,6 +88,30 @@ public class AuthService {
             log.warn("KAKAO토큰을 JSON으로 매핑하는 과정에서 예외발생 = {}", e.getMessage());
         }
         return authToken;
+    }
+
+    private HttpEntity<MultiValueMap<String, String>> getAccessTokenRequest(String code) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-type", CONTENT_TYPE);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(HEADER_GRANT_TYPE, GRANT_TYPE);
+        params.add(HEADER_CLIENT_ID, CLIENT_ID);
+        params.add(HEADER_CLIENT_SECRET, CLIENT_SECRET);
+        params.add(HEADER_REDIRECT_URI, REDIRECT_URI);
+        params.add(HEADER_CODE, code);
+
+        return new HttpEntity<>(params, headers);
+    }
+
+    private ResponseEntity<String> getAccessTokenResponse(HttpEntity<MultiValueMap<String, String>> accessTokenRequest) {
+        RestTemplate template = new RestTemplate();
+        return template.exchange(
+                TOKEN_URI,
+                HttpMethod.POST,
+                accessTokenRequest,
+                String.class
+        );
     }
 
     @Transactional(rollbackFor = Exception.class)
