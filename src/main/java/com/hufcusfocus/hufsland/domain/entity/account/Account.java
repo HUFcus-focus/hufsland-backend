@@ -28,7 +28,8 @@ public class Account {
     private Provider provider;
 
     @Builder
-    public Account(String email, Provider provider) {
+    public Account(int studentId, String email, Provider provider) {
+        this.studentId = studentId;
         this.email = email;
         this.provider = provider;
     }
