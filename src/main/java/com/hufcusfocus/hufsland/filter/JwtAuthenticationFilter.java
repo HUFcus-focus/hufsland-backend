@@ -24,6 +24,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     private JwtTokenProvider jwtTokenProvider;
     private final String HEADER_AUTHORIZATION = "Authorization";
     private final String HEADER_AUTHORIZATION_PREFIX = "Bearer ";
+    private final String EXCEPTION_URI = "/v1/auth";
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager, AccountRepository accountRepository, JwtTokenProvider jwtTokenProvider) {
         super(authenticationManager);
@@ -34,12 +35,12 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         String requestURI = request.getRequestURI();
-        if (!requestURI.contains("/v1/auth")) {
+        if (!requestURI.contains(EXCEPTION_URI)) {
             String accessToken = request.getHeader(HEADER_AUTHORIZATION).replace(HEADER_AUTHORIZATION_PREFIX, "");
 
             String accountId = jwtTokenProvider.getPayload(accessToken);
             Account account = accountRepository.findById(Integer.parseInt(accountId))
-                    .orElseThrow(() -> new RuntimeException("인증되지 않은 사용자입니다."));
+                    .orElseThrow(() -> new RuntimeException("인증되지 않은 사용자입니다.")); //TODO : 예외처리(Spring-Security에서 처리)
 
             AccountPrincipal accountPrincipal = new AccountPrincipal(account);
             Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal,
