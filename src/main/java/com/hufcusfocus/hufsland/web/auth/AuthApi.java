@@ -21,6 +21,8 @@ public class AuthApi {
 
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final String HEADER_AUTHORIZATION = "Authorization";
+    private final String HEADER_AUTHORIZATION_PREFIX = "Bearer ";
     private final String STATUS_OK = "OK";
     private final String STATUS_RENEW = "RENEW";
     private final String STATUS_EXPIRED = "EXPIRED";
@@ -28,13 +30,17 @@ public class AuthApi {
     @GetMapping("/{provider}")
     public void socialLogin(@PathVariable String provider, String code, HttpServletResponse response) {
         String accessToken = authService.getAuthentication(provider, code);
-        response.setHeader("Authorization", "Bearer " + accessToken);
+        response.setHeader(HEADER_AUTHORIZATION, HEADER_AUTHORIZATION_PREFIX + accessToken);
     }
 
     @GetMapping("/token")
     public Map<String, String> tokenValidation(HttpServletRequest request, HttpServletResponse response) {
-        String accessToken = request.getHeader("Authorization").replace("Bearer ", "");
+        String accessToken = request.getHeader(HEADER_AUTHORIZATION).replace(HEADER_AUTHORIZATION_PREFIX, "");
         boolean isValidated = jwtTokenProvider.validateToken(accessToken);
+        return getValidationResult(isValidated, accessToken, response);
+    }
+
+    private Map<String, String> getValidationResult(boolean isValidated, String accessToken, HttpServletResponse response) {
         Map<String, String> map = new HashMap<>();
         if (!isValidated) {
             String newAccessToken = authService.getReAuthentication(accessToken);
@@ -42,7 +48,7 @@ public class AuthApi {
                 map.put("status", STATUS_EXPIRED);
                 return map;
             }
-            response.setHeader("Authorization", "Bearer " + newAccessToken);
+            response.setHeader(HEADER_AUTHORIZATION, HEADER_AUTHORIZATION_PREFIX + newAccessToken);
             map.put("status", STATUS_RENEW);
             return map;
         }

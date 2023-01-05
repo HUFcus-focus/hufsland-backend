@@ -22,6 +22,8 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
     private AccountRepository accountRepository;
     private JwtTokenProvider jwtTokenProvider;
+    private final String HEADER_AUTHORIZATION = "Authorization";
+    private final String HEADER_AUTHORIZATION_PREFIX = "Bearer ";
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager, AccountRepository accountRepository, JwtTokenProvider jwtTokenProvider) {
         super(authenticationManager);
@@ -33,7 +35,7 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         String requestURI = request.getRequestURI();
         if (!requestURI.contains("/v1/auth")) {
-            String accessToken = request.getHeader("Authorization").replace("Bearer ", "");
+            String accessToken = request.getHeader(HEADER_AUTHORIZATION).replace(HEADER_AUTHORIZATION_PREFIX, "");
 
             String accountId = jwtTokenProvider.getPayload(accessToken);
             Account account = accountRepository.findById(Integer.parseInt(accountId))

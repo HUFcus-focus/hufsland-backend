@@ -28,6 +28,9 @@ public class AccountService {
     private final String USER_INFO_URI;
     @Value("{headers.content-type}")
     private final String CONTENT_TYPE;
+    private final String HEADER_CONTENT_TYPE = "Content-type";
+    private final String HEADER_AUTHORIZATION = "Authorization";
+    private final String HEADER_AUTHORIZATION_PREFIX = "Bearer ";
 
     public Account save(String provider, String token) {
         if (provider.equals("kakao")) {
@@ -52,28 +55,34 @@ public class AccountService {
     }
 
     private KakaoProfile findProfile(String token) {
-        RestTemplate template = new RestTemplate();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + token);
-        headers.add("Content-type", CONTENT_TYPE);
-
-        HttpEntity<MultiValueMap<String, String>> kakaoProfileRequest = new HttpEntity<>(headers);
-
-        ResponseEntity<String> kakaoProfileResponse = template.exchange(
-                USER_INFO_URI,
-                HttpMethod.POST,
-                kakaoProfileRequest,
-                String.class
-        );
+        HttpEntity<MultiValueMap<String, String>> profileRequest = getProfileRequest(token);
+        ResponseEntity<String> profileResponse = getProfileResponse(profileRequest);
 
         ObjectMapper objectMapper = new ObjectMapper();
         KakaoProfile kakaoProfile = null;
         try {
-            kakaoProfile = objectMapper.readValue(kakaoProfileResponse.getBody(), KakaoProfile.class);
+            kakaoProfile = objectMapper.readValue(profileResponse.getBody(), KakaoProfile.class);
         } catch (JsonProcessingException e) {
             log.warn("KAKAO로부터 프로필 가져오는 과정에서 예외발생 = {}", e.getMessage());
         }
         return kakaoProfile;
+    }
+
+    private HttpEntity<MultiValueMap<String, String>> getProfileRequest(String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HEADER_AUTHORIZATION, HEADER_AUTHORIZATION_PREFIX + token);
+        headers.add(HEADER_CONTENT_TYPE, CONTENT_TYPE);
+
+        return new HttpEntity<>(headers);
+    }
+
+    private ResponseEntity<String> getProfileResponse(HttpEntity<MultiValueMap<String, String>> profileRequest) {
+        RestTemplate template = new RestTemplate();
+        return template.exchange(
+                USER_INFO_URI,
+                HttpMethod.POST,
+                profileRequest,
+                String.class
+        );
     }
 }
