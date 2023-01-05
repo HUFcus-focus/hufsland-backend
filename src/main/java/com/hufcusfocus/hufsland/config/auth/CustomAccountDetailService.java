@@ -21,12 +21,9 @@ public class CustomAccountDetailService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Optional<Account> optionalAccount = accountRepository.findByEmail(email);
-        try {
-            Account account = optionalAccount.get();
-            return new AccountPrincipal(account);
-        } catch (NullPointerException exception) {
-            log.warn("존재하지 않는 이메일 입니다.");
+        if (optionalAccount.isEmpty()) {
+            throw new UsernameNotFoundException("존재하지 않는 이메일 입니다."); //TODO : 이메일 존재 X 예외처리
         }
-        return null;
+        return new AccountPrincipal(optionalAccount.get());
     }
 }
