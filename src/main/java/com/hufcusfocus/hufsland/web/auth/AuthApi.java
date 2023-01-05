@@ -25,7 +25,7 @@ public class AuthApi {
     @GetMapping("/{provider}")
     public void socialLogin(@PathVariable String provider, String code, HttpServletResponse response) {
         String accessToken = authService.getAuthentication(provider, code);
-        response.setHeader("Authorization", "Bearer "+accessToken);
+        response.setHeader("Authorization", "Bearer " + accessToken);
     }
 
     @GetMapping("/token")

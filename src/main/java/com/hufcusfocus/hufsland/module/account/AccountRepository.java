@@ -1,14 +1,12 @@
-package com.hufcusfocus.hufsland.module.user;
+package com.hufcusfocus.hufsland.module.account;
 
 import com.hufcusfocus.hufsland.domain.entity.account.Account;
 import com.hufcusfocus.hufsland.domain.entity.account.Provider;
-import com.hufcusfocus.hufsland.domain.entity.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
-
-    Optional<User> findByEmail(String email);
+public interface AccountRepository extends JpaRepository<Account, Integer> {
     Optional<Account> findByEmailAndProvider(String email, Provider provider);
+    Optional<Account> findByEmail(String email);
 }

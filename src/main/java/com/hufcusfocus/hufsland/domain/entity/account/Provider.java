@@ -1,4 +1,4 @@
-package com.hufcusfocus.hufsland.domain.entity.user;
+package com.hufcusfocus.hufsland.domain.entity.account;
 
 import lombok.Getter;
 

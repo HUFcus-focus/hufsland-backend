@@ -1,11 +1,10 @@
-package com.hufcusfocus.hufsland.module.user;
+package com.hufcusfocus.hufsland.module.account;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hufcusfocus.hufsland.domain.dto.auth.KakaoProfile;
-import com.hufcusfocus.hufsland.domain.entity.user.Provider;
-import com.hufcusfocus.hufsland.domain.entity.user.Role;
-import com.hufcusfocus.hufsland.domain.entity.user.User;
+import com.hufcusfocus.hufsland.domain.entity.account.Account;
+import com.hufcusfocus.hufsland.domain.entity.account.Provider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -20,14 +19,15 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
-    private final UserRepository userRepository;
+public class AccountService {
+
+    private final AccountRepository accountRepository;
     @Value("{security.oauth2.client.registration.kakao.user-info-uri}")
     private final String USER_INFO_URI;
     @Value("{headers.content-type}")
     private final String CONTENT_TYPE;
 
-    public User save(String provider, String token) {
+    public Account save(String provider, String token) {
         if (provider.equals("kakao")) {
             return saveKakao(token);
         } else {
@@ -35,19 +35,19 @@ public class UserService {
         }
     }
 
-    private User saveKakao(String token) {
+    private Account saveKakao(String token) {
         KakaoProfile profile = findProfile(token);
-        Optional<User> optionalUser = userRepository.findByEmail(profile.getKakao_account().getEmail());
-        if (!optionalUser.isPresent()) {
-            User user = User.builder()
-                    .nickname(profile.getKakao_account().getProfile().getNickname())
+        Optional<Account> optionalAccount = accountRepository.findByEmailAndProvider(profile.getKakao_account().getEmail(), Provider.KAKAO);
+        if (optionalAccount.isEmpty()) {
+            Account account = Account.builder()
+                    .studentId(0)
                     .email(profile.getKakao_account().getEmail())
-                    .role(Role.ROLE_USER)
-                    .provider(Provider.KAKAO).build();
-            userRepository.save(user);
-            return user;
+                    .provider(Provider.KAKAO)
+                    .build();
+            accountRepository.save(account);
+            return account;
         } else {
-            return optionalUser.get();
+            return optionalAccount.get();
         }
     }
 

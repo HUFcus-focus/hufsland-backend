@@ -1,8 +1,7 @@
 package com.hufcusfocus.hufsland.config;
 
 import com.hufcusfocus.hufsland.filter.JwtAuthenticationFilter;
-import com.hufcusfocus.hufsland.module.auth.AuthService;
-import com.hufcusfocus.hufsland.module.user.UserRepository;
+import com.hufcusfocus.hufsland.module.account.AccountRepository;
 import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +18,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
@@ -35,7 +34,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
                 .and()
                 .formLogin().disable()
-                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), userRepository, jwtTokenProvider),
+                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), accountRepository, jwtTokenProvider),
                         BasicAuthenticationFilter.class);
     }
 

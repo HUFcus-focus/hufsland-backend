@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hufcusfocus.hufsland.domain.dto.auth.AuthToken;
+import com.hufcusfocus.hufsland.domain.entity.account.Account;
 import com.hufcusfocus.hufsland.domain.entity.auth.RefreshToken;
-import com.hufcusfocus.hufsland.domain.entity.user.User;
-import com.hufcusfocus.hufsland.module.user.UserService;
+import com.hufcusfocus.hufsland.module.account.AccountService;
 import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +26,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserService userService;
+    private final AccountService accountService;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthRepository authRepository;
     @Value("{security.oauth2.client.registration.kakao.authorization-grant-type}")
@@ -46,14 +46,14 @@ public class AuthService {
     @Transactional(rollbackFor = Exception.class)
     public String getAuthentication(String provider, String code) {
         AuthToken socialToken = getSocialToken(provider, code);
-        User user = userService.save(provider, socialToken.getAccess_token());
+        Account account = accountService.save(provider, socialToken.getAccess_token());
 
-        String accessToken = jwtTokenProvider.createAccessToken(String.valueOf(user.getId()));
+        String accessToken = jwtTokenProvider.createAccessToken(String.valueOf(account.getId()));
         String refreshToken = jwtTokenProvider.createRefreshToken();
 
         RefreshToken token = RefreshToken.builder()
                 .refreshToken(refreshToken)
-                .userId(user.getId())
+                .accountId(account.getId())
                 .build();
         authRepository.save(token);
 
@@ -104,8 +104,8 @@ public class AuthService {
     @Transactional(rollbackFor = Exception.class)
     public String getReAuthentication(String accessToken) {
         String payload = jwtTokenProvider.getPayload(accessToken);
-        long userId = Long.parseLong(payload);
-        Optional<RefreshToken> optionalRefreshToken = authRepository.findByUserId(userId);
+        int accountId = Integer.parseInt(payload);
+        Optional<RefreshToken> optionalRefreshToken = authRepository.findByAccountId(accountId);
 
         if (optionalRefreshToken.isPresent()) {
             boolean isValidated = jwtTokenProvider.validateToken(optionalRefreshToken.get().getRefreshToken());
