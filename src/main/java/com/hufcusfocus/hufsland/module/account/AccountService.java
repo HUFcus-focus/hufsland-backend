@@ -6,6 +6,7 @@ import com.hufcusfocus.hufsland.domain.dto.auth.KakaoProfile;
 import com.hufcusfocus.hufsland.domain.entity.account.Account;
 import com.hufcusfocus.hufsland.domain.entity.account.Provider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountService {
@@ -30,9 +32,8 @@ public class AccountService {
     public Account save(String provider, String token) {
         if (provider.equals("kakao")) {
             return saveKakao(token);
-        } else {
-            return null; //TODO 예외처리
         }
+        return null; //TODO : 예외발생시켜야 하는가?
     }
 
     private Account saveKakao(String token) {
@@ -40,7 +41,6 @@ public class AccountService {
         Optional<Account> optionalAccount = accountRepository.findByEmailAndProvider(profile.getKakao_account().getEmail(), Provider.KAKAO);
         if (optionalAccount.isEmpty()) {
             Account account = Account.builder()
-                    .studentId(0)
                     .email(profile.getKakao_account().getEmail())
                     .provider(Provider.KAKAO)
                     .build();
@@ -72,9 +72,8 @@ public class AccountService {
         try {
             kakaoProfile = objectMapper.readValue(kakaoProfileResponse.getBody(), KakaoProfile.class);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.warn("KAKAO로부터 프로필 가져오는 과정에서 예외발생 = {}", e.getMessage());
         }
-
         return kakaoProfile;
     }
 }

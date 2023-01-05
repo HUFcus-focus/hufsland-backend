@@ -1,6 +1,7 @@
 package com.hufcusfocus.hufsland.util;
 
 import io.jsonwebtoken.*;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -9,21 +10,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Random;
 
+
 @Component
 @Slf4j
+@AllArgsConstructor
 public class JwtTokenProvider {
 
+    @Value("${jwt.access-token.expire-length}")
     private final long ACCESS_TOKEN_VALIDITY;
+    @Value("${jwt.refresh-token.expire-length}")
     private final long REFRESH_TOKEN_VALIDITY;
+    @Value("${jwt.token.secret-key}")
     private final String SECRET_KEY;
-
-    public JwtTokenProvider(@Value("${jwt.access-token.expire-length}") long access_token_validity,
-                            @Value("${jwt.refresh-token.expire-length}") long refresh_token_validity,
-                            @Value("${jwt.token.secret-key}") String secret_key) {
-        ACCESS_TOKEN_VALIDITY = access_token_validity;
-        REFRESH_TOKEN_VALIDITY = refresh_token_validity;
-        SECRET_KEY = secret_key;
-    }
 
     public String createAccessToken(String payload) {
         return createToken(payload, ACCESS_TOKEN_VALIDITY);
