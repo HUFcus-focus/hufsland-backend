@@ -1,8 +1,7 @@
 package com.hufcusfocus.hufsland.config;
 
 import com.hufcusfocus.hufsland.filter.JwtAuthenticationFilter;
-import com.hufcusfocus.hufsland.module.auth.AuthService;
-import com.hufcusfocus.hufsland.module.user.UserRepository;
+import com.hufcusfocus.hufsland.module.account.AccountRepository;
 import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,8 +18,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final String CLIENT_URI = "http://localhost:3000";
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -35,14 +35,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
                 .and()
                 .formLogin().disable()
-                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), userRepository, jwtTokenProvider),
+                .addFilterBefore(new JwtAuthenticationFilter(authenticationManager(), accountRepository, jwtTokenProvider),
                         BasicAuthenticationFilter.class);
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.addAllowedOrigin(CLIENT_URI);
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         configuration.addExposedHeader("*");
