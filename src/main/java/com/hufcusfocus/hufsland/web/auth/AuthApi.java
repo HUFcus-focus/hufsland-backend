@@ -29,7 +29,7 @@ public class AuthApi {
 
     @GetMapping("/{provider}")
     public void socialLogin(@PathVariable String provider, String code, HttpServletResponse response) {
-        String accessToken = authService.getAuthentication(provider, code);
+        String accessToken = authService.getAuthentication(provider, code); //예외발생시 accessToken값으로 null이 들어온다.
         response.setHeader(HEADER_AUTHORIZATION, HEADER_AUTHORIZATION_PREFIX + accessToken);
     }
 
