@@ -14,7 +14,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CustomAccountDetailService implements UserDetailsService {
+public class AccountDetailServiceImpl implements UserDetailsService {
 
     private final AccountRepository accountRepository;
 

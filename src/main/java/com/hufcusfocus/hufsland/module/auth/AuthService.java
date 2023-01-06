@@ -11,10 +11,8 @@ import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -31,18 +29,16 @@ public class AuthService {
     private final AccountService accountService;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthRepository authRepository;
-    @Value("{security.oauth2.client.registration.kakao.authorization-grant-type}")
-    private final String GRANT_TYPE;
-    @Value("{security.oauth2.client.registration.kakao.client-id}")
-    private final String CLIENT_ID;
-    @Value("{security.oauth2.client.registration.kakao.client-secret}")
-    private final String CLIENT_SECRET;
-    @Value("{security.oauth2.client.registration.kakao.redirect-uri}")
-    private final String REDIRECT_URI;
-    @Value("{security.oauth2.client.provider.kakao.token-uri}")
-    private final String TOKEN_URI;
-    @Value("{headers.content-type}")
-    private final String CONTENT_TYPE;
+    @Value("${spring.security.oauth2.client.registration.kakao.authorization-grant-type}")
+    private String GRANT_TYPE;
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
+    private String CLIENT_ID;
+    @Value("${spring.security.oauth2.client.registration.kakao.client-secret}")
+    private String CLIENT_SECRET;
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
+    private String REDIRECT_URI;
+    @Value("${spring.security.oauth2.client.provider.kakao.token-uri}")
+    private String TOKEN_URI;
     private final String HEADER_GRANT_TYPE = "grant_type";
     private final String HEADER_CLIENT_ID = "client_id";
     private final String HEADER_CLIENT_SECRET = "client_secret";
@@ -92,7 +88,7 @@ public class AuthService {
 
     private HttpEntity<MultiValueMap<String, String>> getAccessTokenRequest(String code) {
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-type", CONTENT_TYPE);
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add(HEADER_GRANT_TYPE, GRANT_TYPE);
@@ -106,12 +102,8 @@ public class AuthService {
 
     private ResponseEntity<String> getAccessTokenResponse(HttpEntity<MultiValueMap<String, String>> accessTokenRequest) {
         RestTemplate template = new RestTemplate();
-        return template.exchange(
-                TOKEN_URI,
-                HttpMethod.POST,
-                accessTokenRequest,
-                String.class
-        );
+        template.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        return template.postForEntity(TOKEN_URI, accessTokenRequest, String.class);
     }
 
     @Transactional(rollbackFor = Exception.class)
