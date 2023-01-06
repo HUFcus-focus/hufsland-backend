@@ -33,7 +33,7 @@ public class AccountService {
         if (provider.equals("kakao")) {
             return saveKakao(token);
         }
-        return null; //TODO : 예외발생시켜야 하는가?
+        return null;
     }
 
     private Account saveKakao(String token) {
