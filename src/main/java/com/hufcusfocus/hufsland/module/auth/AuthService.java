@@ -1,7 +1,6 @@
 package com.hufcusfocus.hufsland.module.auth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hufcusfocus.hufsland.domain.dto.auth.AuthToken;
 import com.hufcusfocus.hufsland.domain.entity.account.Account;
@@ -19,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -49,17 +49,26 @@ public class AuthService {
     @Transactional(rollbackFor = Exception.class)
     public String getAuthentication(String provider, String code) {
         AuthToken socialToken = getSocialToken(provider, code);
+        if (Objects.isNull(socialToken)) {
+            log.error("KAKAO 토큰 가져오는 과정에서 예외발생");
+            return null;
+        }
         Account account = accountService.save(provider, socialToken.getAccess_token());
+        if (Objects.isNull(account)) {
+            log.error("사용자 계정 조회 과정에서 예외발생");
+            return null;
+        }
+        return getHufslandToken(account);
+    }
 
+    private String getHufslandToken(Account account) {
         String accessToken = jwtTokenProvider.createAccessToken(String.valueOf(account.getId()));
         String refreshToken = jwtTokenProvider.createRefreshToken();
-
         RefreshToken token = RefreshToken.builder()
                 .refreshToken(refreshToken)
                 .accountId(account.getId())
                 .build();
         authRepository.save(token);
-
         return accessToken;
     }
 
@@ -67,7 +76,7 @@ public class AuthService {
         if (provider.equals("kakao")) {
             return getKakaoToken(code);
         }
-        return null; //TODO : 예외발생시켜야 하는가?
+        return null;
     }
 
     private AuthToken getKakaoToken(String code) {
@@ -78,10 +87,8 @@ public class AuthService {
         AuthToken authToken = null;
         try {
             authToken = mapper.readValue(accessTokenResponse.getBody(), AuthToken.class);
-        } catch (JsonMappingException e) {
-            log.warn("KAKAO토큰을 JSON으로 매핑하는 과정에서 예외발생 = {}", e.getMessage());
         } catch (JsonProcessingException e) {
-            log.warn("KAKAO토큰을 JSON으로 매핑하는 과정에서 예외발생 = {}", e.getMessage());
+            return null;
         }
         return authToken;
     }
