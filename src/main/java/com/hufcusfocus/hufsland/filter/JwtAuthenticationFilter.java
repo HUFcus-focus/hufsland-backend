@@ -16,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 
 @Slf4j
 public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
@@ -35,17 +36,18 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         String requestURI = request.getRequestURI();
-        if (!requestURI.contains(EXCEPTION_URI)) {
+        if (!requestURI.contains(EXCEPTION_URI)) { //TODO : 예외 URI 로직 뺴보기
             String accessToken = request.getHeader(HEADER_AUTHORIZATION).replace(HEADER_AUTHORIZATION_PREFIX, "");
 
             String accountId = jwtTokenProvider.getPayload(accessToken);
-            Account account = accountRepository.findById(Integer.parseInt(accountId))
-                    .orElseThrow(() -> new RuntimeException("인증되지 않은 사용자입니다.")); //TODO : 예외처리(Spring-Security에서 처리)
+            Optional<Account> optionalAccount = accountRepository.findById(Integer.parseInt(accountId));
+            if (optionalAccount.isEmpty()) {
+                throw new RuntimeException("잘못된 접근입니다.");
+            }
 
-            AccountPrincipal accountPrincipal = new AccountPrincipal(account);
+            AccountPrincipal accountPrincipal = new AccountPrincipal(optionalAccount.get());
             Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal,
                     null, accountPrincipal.getAuthorities());
-
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         chain.doFilter(request, response);

@@ -7,7 +7,6 @@ import com.hufcusfocus.hufsland.domain.entity.account.Account;
 import com.hufcusfocus.hufsland.domain.entity.account.Provider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -24,10 +23,8 @@ import java.util.Optional;
 public class AccountService {
 
     private final AccountRepository accountRepository;
-    @Value("{security.oauth2.client.registration.kakao.user-info-uri}")
-    private final String USER_INFO_URI;
-    @Value("{headers.content-type}")
-    private final String CONTENT_TYPE;
+    private final String USER_INFO_URI = "https://kapi.kakao.com/v2/user/me";
+    private final String CONTENT_TYPE = "application/x-www-form-urlencoded;charset=utf-8";
     private final String HEADER_CONTENT_TYPE = "Content-type";
     private final String HEADER_AUTHORIZATION = "Authorization";
     private final String HEADER_AUTHORIZATION_PREFIX = "Bearer ";
