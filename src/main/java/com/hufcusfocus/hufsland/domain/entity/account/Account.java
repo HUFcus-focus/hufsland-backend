@@ -1,36 +1,35 @@
-package com.hufcusfocus.hufsland.domain.entity.user;
+package com.hufcusfocus.hufsland.domain.entity.account;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Comment;
 
 import javax.persistence.*;
 
 @Entity
 @Getter
 @NoArgsConstructor
-public class User {
+public class Account {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    @Comment("아이디")
+    private int id;
 
-    private String nickname;
+    @Comment("학번")
+    private int studentId;
 
+    @Comment("이메일")
     private String email;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
-
-    @Enumerated(EnumType.STRING)
+    @Comment("소셜 서비스")
     private Provider provider;
 
-    private String providerToken;
-
     @Builder
-    public User(String nickname, String email, Role role, Provider provider, String providerToken) {
-        this.nickname = nickname;
+    public Account(String email, Provider provider) {
         this.email = email;
-        this.role = role;
         this.provider = provider;
     }
 }

@@ -1,122 +1,132 @@
 package com.hufcusfocus.hufsland.module.auth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hufcusfocus.hufsland.domain.dto.auth.AuthToken;
+import com.hufcusfocus.hufsland.domain.entity.account.Account;
 import com.hufcusfocus.hufsland.domain.entity.auth.RefreshToken;
-import com.hufcusfocus.hufsland.domain.entity.user.User;
-import com.hufcusfocus.hufsland.module.user.UserService;
+import com.hufcusfocus.hufsland.module.account.AccountService;
 import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserService userService;
+    private final AccountService accountService;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthRepository authRepository;
-    @Value("{security.oauth2.client.registration.kakao.authorization-grant-type}")
-    private final String GRANT_TYPE;
-    @Value("{security.oauth2.client.registration.kakao.client-id}")
-    private final String CLIENT_ID;
-    @Value("{security.oauth2.client.registration.kakao.client-secret}")
-    private final String CLIENT_SECRET;
-    @Value("{security.oauth2.client.registration.kakao.redirect-uri}")
-    private final String REDIRECT_URI;
-    @Value("{security.oauth2.client.provider.kakao.token-uri}")
-    private final String TOKEN_URI;
-    @Value("{headers.content-type}")
-    private final String CONTENT_TYPE;
+    @Value("${spring.security.oauth2.client.registration.kakao.authorization-grant-type}")
+    private String GRANT_TYPE;
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
+    private String CLIENT_ID;
+    @Value("${spring.security.oauth2.client.registration.kakao.client-secret}")
+    private String CLIENT_SECRET;
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
+    private String REDIRECT_URI;
+    @Value("${spring.security.oauth2.client.provider.kakao.token-uri}")
+    private String TOKEN_URI;
+    private final String HEADER_GRANT_TYPE = "grant_type";
+    private final String HEADER_CLIENT_ID = "client_id";
+    private final String HEADER_CLIENT_SECRET = "client_secret";
+    private final String HEADER_REDIRECT_URI = "redirect_uri";
+    private final String HEADER_CODE = "code";
 
 
     @Transactional(rollbackFor = Exception.class)
     public String getAuthentication(String provider, String code) {
         AuthToken socialToken = getSocialToken(provider, code);
-        User user = userService.save(provider, socialToken.getAccess_token());
+        if (Objects.isNull(socialToken)) {
+            log.error("KAKAO 토큰 가져오는 과정에서 예외발생");
+            return null;
+        }
+        Account account = accountService.save(provider, socialToken.getAccess_token());
+        if (Objects.isNull(account)) {
+            log.error("사용자 계정 조회 과정에서 예외발생");
+            return null;
+        }
+        return getHufslandToken(account);
+    }
 
-        String accessToken = jwtTokenProvider.createAccessToken(String.valueOf(user.getId()));
+    private String getHufslandToken(Account account) {
+        String accessToken = jwtTokenProvider.createAccessToken(String.valueOf(account.getId()));
         String refreshToken = jwtTokenProvider.createRefreshToken();
-
         RefreshToken token = RefreshToken.builder()
                 .refreshToken(refreshToken)
-                .userId(user.getId())
+                .accountId(account.getId())
                 .build();
         authRepository.save(token);
-
         return accessToken;
     }
 
     public AuthToken getSocialToken(String provider, String code) {
         if (provider.equals("kakao")) {
             return getKakaoToken(code);
-        } else {
-            return null; //TODO 예외처리 (소셜토큰 가져오기 메서드)
         }
+        return null;
     }
 
     private AuthToken getKakaoToken(String code) {
-        RestTemplate template = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-type", CONTENT_TYPE);
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", GRANT_TYPE);
-        params.add("client_id", CLIENT_ID);
-        params.add("client_secret", CLIENT_SECRET);
-        params.add("redirect_uri", REDIRECT_URI);
-        params.add("code", code);
-
-        HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
-
-        ResponseEntity<String> accessTokenResponse = template.exchange(
-                TOKEN_URI,
-                HttpMethod.POST,
-                kakaoTokenRequest,
-                String.class
-        );
+        HttpEntity<MultiValueMap<String, String>> accessTokenRequest = getAccessTokenRequest(code);
+        ResponseEntity<String> accessTokenResponse = getAccessTokenResponse(accessTokenRequest);
 
         ObjectMapper mapper = new ObjectMapper();
         AuthToken authToken = null;
         try {
             authToken = mapper.readValue(accessTokenResponse.getBody(), AuthToken.class);
-        } catch (JsonMappingException e) {
-            e.printStackTrace(); //TODO 예외처리 (소셜토큰 가져오기 메서드)
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            return null;
         }
         return authToken;
+    }
+
+    private HttpEntity<MultiValueMap<String, String>> getAccessTokenRequest(String code) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(HEADER_GRANT_TYPE, GRANT_TYPE);
+        params.add(HEADER_CLIENT_ID, CLIENT_ID);
+        params.add(HEADER_CLIENT_SECRET, CLIENT_SECRET);
+        params.add(HEADER_REDIRECT_URI, REDIRECT_URI);
+        params.add(HEADER_CODE, code);
+
+        return new HttpEntity<>(params, headers);
+    }
+
+    private ResponseEntity<String> getAccessTokenResponse(HttpEntity<MultiValueMap<String, String>> accessTokenRequest) {
+        RestTemplate template = new RestTemplate();
+        template.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        return template.postForEntity(TOKEN_URI, accessTokenRequest, String.class);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public String getReAuthentication(String accessToken) {
         String payload = jwtTokenProvider.getPayload(accessToken);
-        long userId = Long.parseLong(payload);
-        Optional<RefreshToken> optionalRefreshToken = authRepository.findByUserId(userId);
+        int accountId = Integer.parseInt(payload);
+        Optional<RefreshToken> optionalRefreshToken = authRepository.findByAccountId(accountId);
 
         if (optionalRefreshToken.isPresent()) {
             boolean isValidated = jwtTokenProvider.validateToken(optionalRefreshToken.get().getRefreshToken());
             if (isValidated) {
                 return jwtTokenProvider.createAccessToken(payload);
-            } else {
-                authRepository.delete(optionalRefreshToken.get());
-                return null;
             }
-        } else {
+            authRepository.delete(optionalRefreshToken.get());
             return null;
         }
+        return null;
     }
 }

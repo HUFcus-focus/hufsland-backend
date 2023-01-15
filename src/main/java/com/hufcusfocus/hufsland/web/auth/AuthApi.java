@@ -21,30 +21,38 @@ public class AuthApi {
 
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final String HEADER_AUTHORIZATION = "Authorization";
+    private final String HEADER_AUTHORIZATION_PREFIX = "Bearer ";
+    private final String STATUS_OK = "OK";
+    private final String STATUS_RENEW = "RENEW";
+    private final String STATUS_EXPIRED = "EXPIRED";
 
     @GetMapping("/{provider}")
     public void socialLogin(@PathVariable String provider, String code, HttpServletResponse response) {
-        String accessToken = authService.getAuthentication(provider, code);
-        response.setHeader("Authorization", "Bearer "+accessToken);
+        String accessToken = authService.getAuthentication(provider, code); //예외발생시 accessToken값으로 null이 들어온다.
+        response.setHeader(HEADER_AUTHORIZATION, HEADER_AUTHORIZATION_PREFIX + accessToken);
     }
 
     @GetMapping("/token")
     public Map<String, String> tokenValidation(HttpServletRequest request, HttpServletResponse response) {
-        String accessToken = request.getHeader("Authorization").replace("Bearer ", "");
+        String accessToken = request.getHeader(HEADER_AUTHORIZATION).replace(HEADER_AUTHORIZATION_PREFIX, "");
         boolean isValidated = jwtTokenProvider.validateToken(accessToken);
-        Map<String, String> map = new HashMap<>();
-        if (!isValidated) {//access 토큰 만료기간이 지난 경우
-            String newAccessToken = authService.getReAuthentication(accessToken);
-            if (Objects.isNull(newAccessToken)) {//refresh 토큰의 만료기간도 지난경우
-                map.put("status", "EXPIRED");
+        return getValidationResult(isValidated, accessToken, response);
+    }
 
-            } else {//새로운 access 토큰을 발급받은 경우
-                response.setHeader("Authorization", "Bearer "+newAccessToken);
-                map.put("status", "RENEW");
+    private Map<String, String> getValidationResult(boolean isValidated, String accessToken, HttpServletResponse response) {
+        Map<String, String> map = new HashMap<>();
+        if (!isValidated) {
+            String newAccessToken = authService.getReAuthentication(accessToken);
+            if (Objects.isNull(newAccessToken)) {
+                map.put("status", STATUS_EXPIRED);
+                return map;
             }
-        } else {
-            map.put("status", "OK");
+            response.setHeader(HEADER_AUTHORIZATION, HEADER_AUTHORIZATION_PREFIX + newAccessToken);
+            map.put("status", STATUS_RENEW);
+            return map;
         }
+        map.put("status", STATUS_OK);
         return map;
     }
 }

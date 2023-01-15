@@ -6,5 +6,5 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.Optional;
 
 public interface AuthRepository extends CrudRepository<RefreshToken, String> {
-    Optional<RefreshToken> findByUserId(long userId);
+    Optional<RefreshToken> findByAccountId(int accountId);
 }

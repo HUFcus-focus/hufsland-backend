@@ -7,17 +7,17 @@ import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.index.Indexed;
 
 @Data
-@RedisHash(value = "refreshToken", timeToLive = 1209600000)
+@RedisHash(value = "refreshToken", timeToLive = 1209600000) //TODO : application.yml에서 가져오기
 public class RefreshToken {
 
     @Id
     private String refreshToken;
     @Indexed
-    private long userId;
+    private int accountId;
 
     @Builder
-    public RefreshToken(String refreshToken, long userId) {
+    public RefreshToken(String refreshToken, int accountId) {
         this.refreshToken = refreshToken;
-        this.userId = userId;
+        this.accountId = accountId;
     }
 }
