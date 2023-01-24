@@ -3,6 +3,8 @@ package com.hufcusfocus.hufsland.web.auth;
 import com.hufcusfocus.hufsland.module.auth.AuthService;
 import com.hufcusfocus.hufsland.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,16 +30,29 @@ public class AuthApi {
     private final String STATUS_EXPIRED = "EXPIRED";
 
     @GetMapping("/{provider}")
-    public void socialLogin(@PathVariable String provider, String code, HttpServletResponse response) {
+    public ResponseEntity socialLogin(@PathVariable String provider, String code, HttpServletResponse response) {
         String accessToken = authService.getAuthentication(provider, code); //예외발생시 accessToken값으로 null이 들어온다.
-        response.setHeader(HEADER_AUTHORIZATION, HEADER_AUTHORIZATION_PREFIX + accessToken);
+        if (Objects.isNull(accessToken)) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .header(HEADER_AUTHORIZATION, null)
+                    .body(null);
+        }
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .header(HEADER_AUTHORIZATION, HEADER_AUTHORIZATION_PREFIX + accessToken)
+                .body(null);
     }
 
     @GetMapping("/token")
-    public Map<String, String> tokenValidation(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> tokenValidation(HttpServletRequest request, HttpServletResponse response) {
         String accessToken = request.getHeader(HEADER_AUTHORIZATION).replace(HEADER_AUTHORIZATION_PREFIX, "");
         boolean isValidated = jwtTokenProvider.validateToken(accessToken);
-        return getValidationResult(isValidated, accessToken, response);
+        Map<String, String> validationResult = getValidationResult(isValidated, accessToken, response);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .header(HEADER_AUTHORIZATION, response.getHeader(HEADER_AUTHORIZATION))
+                .body(validationResult);
     }
 
     private Map<String, String> getValidationResult(boolean isValidated, String accessToken, HttpServletResponse response) {
